@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from functools import lru_cache
@@ -16,12 +17,22 @@ class Settings(BaseModel):
 
     @staticmethod
     def from_env() -> "Settings":
-        token_file = os.getenv("ASANA_TOKEN_FILE")
+        logger = logging.getLogger("asana_mcp")
+        token_file = None
+        if "ASANA_TOKEN_FILE" in os.environ:
+            token_file = os.environ.get("ASANA_TOKEN_FILE", "")
+            logger.info("ASANA_TOKEN_FILE set (redacted)")
+            if not token_file.strip():
+                raise RuntimeError("ASANA_TOKEN_FILE is set but empty.")
         token_from_file = ""
         if token_file:
             token_path = Path(token_file)
             if token_path.exists():
                 token_from_file = token_path.read_text(encoding="utf-8").strip()
+                if not token_from_file:
+                    logger.warning("ASANA_TOKEN_FILE is empty after trimming: %s", token_path)
+            else:
+                logger.warning("ASANA_TOKEN_FILE does not exist: %s", token_path)
         data = {
             "asana_access_token": token_from_file or os.getenv("ASANA_ACCESS_TOKEN", ""),
             "asana_api_base": os.getenv("ASANA_API_BASE", "https://app.asana.com/api/1.0"),
@@ -33,7 +44,10 @@ class Settings(BaseModel):
         try:
             return Settings(**data)
         except ValidationError as exc:
-            msg = "Invalid configuration. Set required environment variables (ASANA_ACCESS_TOKEN)."
+            msg = (
+                "Invalid configuration. Set ASANA_ACCESS_TOKEN or provide a valid "
+                "ASANA_TOKEN_FILE with a non-empty token."
+            )
             raise RuntimeError(msg) from exc
 
 

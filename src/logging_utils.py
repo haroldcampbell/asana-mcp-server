@@ -1,5 +1,6 @@
 import json
 import logging
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from typing import Any, Dict
 
@@ -50,8 +51,11 @@ def setup_logging(log_file: str, log_level: str) -> logging.Logger:
         "%(asctime)s %(levelname)s %(name)s %(message)s"
     )
 
+    log_path = Path(log_file)
+    if log_path.parent and not log_path.parent.exists():
+        log_path.parent.mkdir(parents=True, exist_ok=True)
     file_handler = RotatingFileHandler(
-        log_file, maxBytes=5_000_000, backupCount=3
+        str(log_path), maxBytes=5_000_000, backupCount=3
     )
     file_handler.setFormatter(formatter)
 

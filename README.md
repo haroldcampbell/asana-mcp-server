@@ -28,9 +28,24 @@ MCP server that provides Asana tools for tasks, projects, and workspace discover
 
 ## Quickstart
 ```bash
-uv venv
-uv pip install -r requirements.txt
+uv sync
 ASANA_TOKEN_FILE=.secrets/asana.token uv run python -m src.server
+```
+
+## Runtime Flags
+- `--version` prints the server version and exits.
+- `--health-check` validates configuration and exits.
+
+## Codex CLI MCP Server Install
+Example `~/.codex/config.toml` entry:
+```toml
+[mcp_servers.asana]
+command = "uv"
+args = ["--project", "/path/to/repo", "run", "python", "-m", "src.server"]
+
+[mcp_servers.asana.env]
+PYTHONPATH = "/path/to/repo"
+ASANA_TOKEN_FILE = "${HOME}/path/to/repo/.secrets/asana.token"
 ```
 
 ## CLI Scripts
