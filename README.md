@@ -36,6 +36,16 @@ ASANA_TOKEN_FILE=.secrets/asana.token uv run python -m src.server
 - `--version` prints the server version and exits.
 - `--health-check` validates configuration and exits.
 
+## Packaging (PyInstaller)
+- Onefile build: `./scripts/build_dist.sh`
+- Onedir build (faster startup): `./scripts/build_dist_onedir.sh`
+
+Run outputs:
+```bash
+./dist/asana-mcp-server --health-check
+./dist/asana-mcp-server/asana-mcp-server --health-check
+```
+
 ## Codex CLI MCP Server Install
 Example `~/.codex/config.toml` entry:
 ```toml
