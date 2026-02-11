@@ -25,6 +25,8 @@ MCP server that provides Asana tools for tasks, projects, and workspace discover
 - `asana_create_task`
 - `asana_update_task`
 - `asana_delete_task`
+- `asana_move_task_to_section`
+- `asana_create_task_in_section`
 
 ## Quickstart
 ```bash

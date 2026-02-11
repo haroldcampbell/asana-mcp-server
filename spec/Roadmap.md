@@ -31,3 +31,7 @@ Status: implemented
 ## Spec 008 - Tests
 
 Status: implemented
+
+## Spec 009 - Task Sections
+
+Status: implemented

@@ -97,6 +97,27 @@ class DeleteTaskInput(BaseModel):
     task_gid: str = Field(min_length=1)
 
 
+class MoveTaskToSectionInput(BaseModel):
+    section_gid: str = Field(min_length=1)
+    task_gid: str = Field(min_length=1)
+    insert_before: Optional[str] = None
+    insert_after: Optional[str] = None
+
+
+class CreateTaskInSectionInput(BaseModel):
+    section_gid: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    workspace: Optional[str] = None
+    projects: Optional[list[str]] = None
+    notes: Optional[str] = None
+    assignee: Optional[str] = None
+    due_on: Optional[str] = None
+    start_on: Optional[str] = None
+    parent: Optional[str] = None
+    insert_before: Optional[str] = None
+    insert_after: Optional[str] = None
+
+
 def list_workspaces(payload: Dict[str, Any]) -> Dict[str, Any]:
     data = ListWorkspacesInput(**payload).model_dump(exclude_none=True)
     audit(get_logger(), "asana.list_workspaces", data)
@@ -194,5 +215,51 @@ def delete_task(payload: Dict[str, Any]) -> Dict[str, Any]:
     try:
         response = get_client().request("DELETE", f"/tasks/{task_gid}")
         return ok(response)
+    except AsanaError as exc:
+        return err("asana_error", str(exc), {"status_code": exc.status_code, "details": redact_dict(exc.details)})
+
+
+def move_task_to_section(payload: Dict[str, Any]) -> Dict[str, Any]:
+    data = MoveTaskToSectionInput(**payload).model_dump(exclude_none=True)
+    audit(get_logger(), "asana.move_task_to_section", data)
+    section_gid = data.pop("section_gid")
+    task_gid = data.pop("task_gid")
+    payload_data = {"task": task_gid, **data}
+    try:
+        response = get_client().request(
+            "POST",
+            f"/sections/{section_gid}/addTask",
+            payload={"data": payload_data},
+        )
+        return ok(response)
+    except AsanaError as exc:
+        return err("asana_error", str(exc), {"status_code": exc.status_code, "details": redact_dict(exc.details)})
+
+
+def create_task_in_section(payload: Dict[str, Any]) -> Dict[str, Any]:
+    data = CreateTaskInSectionInput(**payload).model_dump(exclude_none=True)
+    audit(get_logger(), "asana.create_task_in_section", data)
+    section_gid = data.pop("section_gid")
+    insert_before = data.pop("insert_before", None)
+    insert_after = data.pop("insert_after", None)
+    try:
+        created = get_client().request("POST", "/tasks", payload={"data": data})
+        task_data = created.get("data") if isinstance(created, dict) else None
+        task_gid = task_data.get("gid") if isinstance(task_data, dict) else None
+        if not task_gid:
+            return err("asana_error", "Asana API returned no task gid", {"details": redact_dict(created)})
+
+        add_payload = {"task": task_gid}
+        if insert_before:
+            add_payload["insert_before"] = insert_before
+        if insert_after:
+            add_payload["insert_after"] = insert_after
+
+        moved = get_client().request(
+            "POST",
+            f"/sections/{section_gid}/addTask",
+            payload={"data": add_payload},
+        )
+        return ok({"task": created, "section_update": moved})
     except AsanaError as exc:
         return err("asana_error", str(exc), {"status_code": exc.status_code, "details": redact_dict(exc.details)})

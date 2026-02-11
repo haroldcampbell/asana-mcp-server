@@ -41,3 +41,17 @@ def register_tools(mcp: FastMCP) -> None:
     @mcp.tool(name="asana_delete_task", description="Delete a task")
     def asana_delete_task(payload: Dict[str, Any]) -> Dict[str, Any]:
         return tool_impl.delete_task(_wrap(payload))
+
+    @mcp.tool(
+        name="asana_move_task_to_section",
+        description="Add or move a task to a specific section",
+    )
+    def asana_move_task_to_section(payload: Dict[str, Any]) -> Dict[str, Any]:
+        return tool_impl.move_task_to_section(_wrap(payload))
+
+    @mcp.tool(
+        name="asana_create_task_in_section",
+        description="Create a task and add it to a specific section",
+    )
+    def asana_create_task_in_section(payload: Dict[str, Any]) -> Dict[str, Any]:
+        return tool_impl.create_task_in_section(_wrap(payload))
